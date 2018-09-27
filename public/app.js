@@ -70,3 +70,17 @@ $.getJSON("/articles", function(data) {
     $("#titleinput").val("");
     $("#bodyinput").val("");
   });
+
+//   Click the scraper button
+$(document).on("click", "#scraper", function() {
+    $.get("/scrape").then(function() {
+        window.location.href = "/";
+      });
+});
+
+// Click the clear button
+$(document).on("click", "#clear-articles", function() {
+    $.get("/clear").then(function() {
+        window.location.href = "/";
+      });
+});
