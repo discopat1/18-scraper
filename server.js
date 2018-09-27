@@ -2,9 +2,6 @@ var express = require("express");
 var expressHandlebars = require("express-handlebars");
 var mongoose = require("mongoose");
 var bodyParser = require("body-parser");
-var logger = require("morgan");
-
-var axios = require("axios");
 var cheerio = require("cheerio");
 var request = require("request");
 
@@ -24,48 +21,45 @@ mongoose.connect("mongodb://localhost/18-scraper", { useNewUrlParser: true });
 
 // Routes
 
-// A GET route for scraping the echoJS website
+// A GET route for scraping the medium website
 app.get("/scrape", function(req, res) {
     // First, we grab the body of the html with request
-    axios.get("https://old.reddit.com/r/webdev/").then(function(response) {
-      // Then, we load that into cheerio and save it to $ for a shorthand selector
-      var $ = cheerio.load(response.data);
+    request("https://medium.com/", (error, response, html) => {
+        if (!error && response.statusCode == 200) {
+            const $ = cheerio.load(html);
   
       // An empty array to save the data that we'll scrape
-  var results = [];
+    const results = [];
 
-  // With cheerio, find each p-tag with the "title" class
-  // (i: iterator. element: the current element)
-  $("p.title").each(function(i, element) {
-
-    // Save the text of the element in a "title" variable
-    var title = $(element).text();
-
-    // In the currently selected element, look at its child elements (i.e., its a-tags),
-    // then save the values for any "href" attributes that the child elements may have
-    var link = $(element).children().attr("href");
-
-    // Save these results in an object that we'll push into the results array we defined earlier
-    results.push({
-      title: title,
-      link: link
-    });
   
-  
-        // Create a new Article using the `result` object built from scraping
-        db.Article.create(results)
-          .then(function(dbArticle) {
-            // View the added result in the console
-            console.log(dbArticle);
-          })
-          .catch(function(err) {
-            // If an error occurred, send it to the client
-            return res.json(err);
-          });
-      });
-  
+    // (i: iterator. element: the current element)
+    $("a.ds-link h3").each((i, el) => {
+        const title = $(el).text();
+        const link = $(el).parent().attr('href');
+        const summary = $(el).parent().next().text();
+        console.log("TITLE ====", title);
+        console.log("LINK ====", link);
+        console.log("SUMMARY =====", summary);
+        results.push({
+            title: title,
+            link: link,
+            summary: summary
+        });
+         // Create a new Article using the `results` object built from scraping
+         db.Article.create(results)
+         .then(function(dbArticle) {
+           // View the added result in the console
+           console.log(dbArticle);
+         })
+         .catch(function(err) {
+           // If an error occurred, send it to the client
+           return res.json(err);
+         });
+    })
+
       // If we were able to successfully scrape and save an Article, send a message to the client
       res.send("Scrape Complete");
+        };
     });
   });
 
