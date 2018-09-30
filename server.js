@@ -1,5 +1,5 @@
 var express = require("express");
-var expressHandlebars = require("express-handlebars");
+
 var mongoose = require("mongoose");
 var bodyParser = require("body-parser");
 var cheerio = require("cheerio");
@@ -19,7 +19,16 @@ app.use(express.static("public"));
 // Connect to the Mongo DB
 mongoose.connect("mongodb://localhost/18-scraper", { useNewUrlParser: true });
 
+var exphbs = require("express-handlebars");
+
+app.engine("handlebars", exphbs({ defaultLayout: "main" }));
+app.set("view engine", "handlebars");
+
 // Routes
+// Route for home
+app.get("/", function(req, res) {
+    res.render("index")
+});
 
 // A GET route for scraping the medium website
 app.get("/scrape", function(req, res) {
@@ -35,8 +44,9 @@ app.get("/scrape", function(req, res) {
     // (i: iterator. element: the current element)
     $("a.ds-link h3").each((i, el) => {
         const title = $(el).text();
-        const link = $(el).parent().attr('href');
-        const summary = $(el).parent().next().text();
+        const parent = $(el).parent();
+        const link = parent.attr('href');
+        const summary = parent.next().text();
         console.log("TITLE ====", title);
         console.log("LINK ====", link);
         console.log("SUMMARY =====", summary);
